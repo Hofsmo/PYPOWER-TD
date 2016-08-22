@@ -26,11 +26,6 @@ toolbox.register("population", tools.initRepeat, list,
                  toolbox.individual)
 
 
-# Define root mean square error
-def rmse(y, y0):
-    return np.sqrt(((y - y0) ** 2).mean())
-
-
 # Define the fitness function
 def compare(individual, y, t):
     num = individual[0]
@@ -43,11 +38,11 @@ def compare(individual, y, t):
     sys = control.tf([num, 1], [den, 1])
     _, yfit = control.step_response(sys, t)
 
-    return rmse(yfit, y),
+    return np.std(yfit - y),
 
 toolbox.register("evaluate", compare)
-toolbox.register("mate", tools.cxSimulatedBinary, eta=1)
-toolbox.register("mutate", tools.mutGaussian, mu=0.02, sigma=0.2, indpb=0.1)
+toolbox.register("mate", tools.cxBlend, alpha=0.5)
+toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.5)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 
@@ -55,11 +50,12 @@ def main():
     random.seed(64)
 
     # Create the data to run the optimization on
-    t, y = control.step_response(control.tf([-2.0, 1.0], [3.0, 1.0]))
+    t = np.arange(0, 20, 0.02)
+    _, y = control.step_response(control.tf([-2.0, 1.0], [3.0, 1.0]), t)
 
-    pop = toolbox.population(n=5)
+    pop = toolbox.population(n=100)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 40
+    CXPB, MUTPB, NGEN = 0.5, 0.05, 100
 
     print("Start of evolution")
 
@@ -122,11 +118,12 @@ def main():
     print("-- End of (successful) evaluation --")
 
     best_ind = tools.selBest(pop, 1)[0]
+
     print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
 
     sys = control.tf([best_ind[0], 1], [best_ind[1], 1])
 
-    t, y_est = control.step_response(sys)
+    t, y_est = control.step_response(sys, t)
 
     plt.plot(t, y, 'r',  y_est, 'b')
     plt.show()
