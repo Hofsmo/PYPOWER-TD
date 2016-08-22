@@ -1,4 +1,4 @@
-from deap import base, creator, tools
+from deap import base, creator, tools, algorithms
 import control
 import random
 import numpy as np
@@ -26,9 +26,8 @@ toolbox.register("population", tools.initRepeat, list,
                  toolbox.individual)
 
 
-# Define root mean square error
-def rmse(y, y0):
-    return np.sqrt(((y - y0) ** 2).mean())
+# Create the data to run the optimization on
+t, y = control.step_response(control.tf([-2.0, 1.0], [3.0, 1.0]))
 
 
 # Define the fitness function
@@ -43,83 +42,28 @@ def compare(individual, y, t):
     sys = control.tf([num, 1], [den, 1])
     _, yfit = control.step_response(sys, t)
 
-    return rmse(yfit, y),
+    return np.std(yfit - y),
 
-toolbox.register("evaluate", compare)
-toolbox.register("mate", tools.cxSimulatedBinary, eta=1)
-toolbox.register("mutate", tools.mutGaussian, mu=0.02, sigma=0.2, indpb=0.1)
+toolbox.register("evaluate", compare, y=y, t=t)
+toolbox.register("mate", tools.cxSimulatedBinaryBounded, eta=0.8, low=-10, up=10)
+toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.01, indpb=0.03)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 
 def main():
     random.seed(64)
 
-    # Create the data to run the optimization on
-    t, y = control.step_response(control.tf([-2.0, 1.0], [3.0, 1.0]))
+    pop = toolbox.population(n=300)
 
-    pop = toolbox.population(n=5)
+    hof = tools.HallOfFame
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("std", np.std)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 40
-
-    print("Start of evolution")
-
-    fitnesses = [compare(ind, y, t) for ind in pop]
-    for ind, fit in zip(pop, fitnesses):
-        ind.fitness.values = fit
-
-    print("Evaluated %i individuals" % len(pop))
-
-    # Begin the evolution
-    for g in range(NGEN):
-        print("-- Generation %i --" % g)
-
-        # Select the next generation individuals
-        offspring = toolbox.select(pop, len(pop))
-        # Clone the selected individuals
-        offspring = list(map(toolbox.clone, offspring))
-
-    for child1, child2 in zip(offspring[::2], offspring[1::2]):
-
-        # Cross two individuals with probability CXPB
-        if random.random() < CXPB:
-            toolbox.mate(child1, child2)
-
-            # fitness values of the children must be calculated later
-            del child1.fitness.values
-            del child2.fitness.values
-
-        for mutant in offspring:
-
-            # mutate an individual with probability MUTPB
-            if random.random() < MUTPB:
-                toolbox.mutate(mutant)
-                del mutant.fitness.values
-
-        # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = [compare(ind, y, t) for ind in invalid_ind]
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
-
-        print("Evaluated %i individuals" % len(invalid_ind))
-
-        # The population is entirely replaced by the offspring
-        pop[:] = offspring
-
-        # Gather all the fitnesses in one list and print the stats
-        fits = [ind.fitness.values[0] for ind in pop]
-
-        length = len(pop)
-        mean = sum(fits) / length
-        sum2 = sum(x*x for x in fits)
-        std = abs(sum2 / length - mean**2)**0.5
-
-        print(" Min %s" % min(fits))
-        print(" Max %s" % max(fits))
-        print(" Avg %s" % mean)
-        print(" Std %s" % std)
-
-    print("-- End of (successful) evaluation --")
+    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.1, mutpb=0.1, ngen=10,
+                                   stats=stats, halloffame=hof)
 
     best_ind = tools.selBest(pop, 1)[0]
     print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
