@@ -2,47 +2,134 @@ from deap import base, creator, tools
 import control
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Make it a minimization problem
-creator.create("FitnessMax", base.Fitness, weights=(-1.0))
-creator.create("Individual", fitness=creator.FitnessMax)
+creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+creator.create("Individual", list,  fitness=creator.FitnessMax)
+
+
+def create_ind():
+    i = random.uniform(-10.0, 10.0)
+
+    if i >= -0.0001 and i <= 0.0001:
+        i = 0.001
+
+    return i
 
 # Create functions for creating individuals and population
 toolbox = base.Toolbox()
-toolbox.register("attr_bool", random.uniform, 0.0, 10.0)
+toolbox.register("attr_bool", create_ind)
 toolbox.register("individual", tools.initRepeat, creator.Individual,
                  toolbox.attr_bool, 2)
 toolbox.register("population", tools.initRepeat, list,
                  toolbox.individual)
 
+
 # Define root mean square error
 def rmse(y, y0):
     return np.sqrt(((y - y0) ** 2).mean())
 
-# Define the fitness function
-def compare(individual, y):
-    sys = control.tf([individual[0], 1], [individual[1]], 1])
-    return rmse(np.array(control.step_response(sys)),np.array(y))
 
-toolbox.register("evaluate", compare, individual, y)
-toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
-toolbox.register("select", tools.selTournament, turnsize=3)
+# Define the fitness function
+def compare(individual, y, t):
+    num = individual[0]
+    den = individual[1]
+
+    if den >= -0.00001 and den <= 0.00001:
+        den = 0.01
+        individual[1] = den
+
+    sys = control.tf([num, 1], [den, 1])
+    _, yfit = control.step_response(sys, t)
+
+    return rmse(yfit, y),
+
+toolbox.register("evaluate", compare)
+toolbox.register("mate", tools.cxSimulatedBinary, eta=1)
+toolbox.register("mutate", tools.mutGaussian, mu=0.02, sigma=0.2, indpb=0.1)
+toolbox.register("select", tools.selTournament, tournsize=3)
+
 
 def main():
     random.seed(64)
 
-# Create the data to run the optimization on
-_, y = control.step_response(tf([-2.0, 1.0], [3.0, 1.0]))
+    # Create the data to run the optimization on
+    t, y = control.step_response(control.tf([-2.0, 1.0], [3.0, 1.0]))
 
     pop = toolbox.population(n=5)
-    hof = tools.HallOfFame(1)
 
     CXPB, MUTPB, NGEN = 0.5, 0.2, 40
 
     print("Start of evolution")
 
-    fitnesses = [compare(ind, y) for ind in individuals]
+    fitnesses = [compare(ind, y, t) for ind in pop]
+    for ind, fit in zip(pop, fitnesses):
+        ind.fitness.values = fit
 
+    print("Evaluated %i individuals" % len(pop))
 
+    # Begin the evolution
+    for g in range(NGEN):
+        print("-- Generation %i --" % g)
 
+        # Select the next generation individuals
+        offspring = toolbox.select(pop, len(pop))
+        # Clone the selected individuals
+        offspring = list(map(toolbox.clone, offspring))
+
+    for child1, child2 in zip(offspring[::2], offspring[1::2]):
+
+        # Cross two individuals with probability CXPB
+        if random.random() < CXPB:
+            toolbox.mate(child1, child2)
+
+            # fitness values of the children must be calculated later
+            del child1.fitness.values
+            del child2.fitness.values
+
+        for mutant in offspring:
+
+            # mutate an individual with probability MUTPB
+            if random.random() < MUTPB:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
+
+        # Evaluate the individuals with an invalid fitness
+        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+        fitnesses = [compare(ind, y, t) for ind in invalid_ind]
+        for ind, fit in zip(invalid_ind, fitnesses):
+            ind.fitness.values = fit
+
+        print("Evaluated %i individuals" % len(invalid_ind))
+
+        # The population is entirely replaced by the offspring
+        pop[:] = offspring
+
+        # Gather all the fitnesses in one list and print the stats
+        fits = [ind.fitness.values[0] for ind in pop]
+
+        length = len(pop)
+        mean = sum(fits) / length
+        sum2 = sum(x*x for x in fits)
+        std = abs(sum2 / length - mean**2)**0.5
+
+        print(" Min %s" % min(fits))
+        print(" Max %s" % max(fits))
+        print(" Avg %s" % mean)
+        print(" Std %s" % std)
+
+    print("-- End of (successful) evaluation --")
+
+    best_ind = tools.selBest(pop, 1)[0]
+    print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
+
+    sys = control.tf([best_ind[0], 1], [best_ind[1], 1])
+
+    t, y_est = control.step_response(sys)
+
+    plt.plot(t, y, 'r',  y_est, 'b')
+    plt.show()
+
+if __name__ == "__main__":
+    main()
