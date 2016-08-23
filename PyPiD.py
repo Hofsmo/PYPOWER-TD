@@ -11,7 +11,6 @@ creator.create("Individual", list,  fitness=creator.FitnessMax)
 
 def create_ind():
     i = random.uniform(-10.0, 10.0)
-
     if i >= -0.0001 and i <= 0.0001:
         i = 0.001
 
@@ -26,11 +25,6 @@ toolbox.register("population", tools.initRepeat, list,
                  toolbox.individual)
 
 
-# Define root mean square error
-def rmse(y, y0):
-    return np.sqrt(((y - y0) ** 2).mean())
-
-
 # Define the fitness function
 def compare(individual, y, t):
     num = individual[0]
@@ -43,23 +37,38 @@ def compare(individual, y, t):
     sys = control.tf([num, 1], [den, 1])
     _, yfit = control.step_response(sys, t)
 
-    return rmse(yfit, y),
+    return np.std(yfit - y),
+
+
+# Create uniform mutator
+def uniform_mutate(child, lower, upper, indpb):
+    return [random.uniform(lower, upper)
+            if random.random() < indpb else gene for gene in child],
+
+
+# Create custom cxBlend
+def cxBlend(mother, father, alpha):
+    for gene1, gene2 in zip(mother, father):
+        r = np.sort(np.array(gene1, gene2))
+        gene2 = random.uniform(r[0] - alpha*(r[1] - r[0]),
+                               r[1] + alpha*(r[1] - r[0]))
+    return father,
+
 
 toolbox.register("evaluate", compare)
-toolbox.register("mate", tools.cxSimulatedBinary, eta=1)
-toolbox.register("mutate", tools.mutGaussian, mu=0.02, sigma=0.2, indpb=0.1)
-toolbox.register("select", tools.selTournament, tournsize=3)
+toolbox.register("mate", cxBlend, alpha=0.5)
+toolbox.register("mutate", uniform_mutate, lower=-10, upper=10, indpb=0.5)
+toolbox.register("select", tools.selBest)
 
 
 def main():
     random.seed(64)
 
-    # Create the data to run the optimization on
     t, y = control.step_response(control.tf([-2.0, 1.0], [3.0, 1.0]))
 
-    pop = toolbox.population(n=5)
+    CXPB, MUTPB, NGEN, NIND = 0.5, 0.5, 40, 5
 
-    CXPB, MUTPB, NGEN = 0.5, 0.2, 40
+    pop = toolbox.population(n=NIND)
 
     print("Start of evolution")
 
@@ -74,11 +83,11 @@ def main():
         print("-- Generation %i --" % g)
 
         # Select the next generation individuals
-        offspring = toolbox.select(pop, len(pop))
+        best = toolbox.select(pop, 1)
         # Clone the selected individuals
-        offspring = list(map(toolbox.clone, offspring))
+        offspring = list(map(toolbox.clone, tools.selWorst(pop, NIND-1)))
 
-    for child1, child2 in zip(offspring[::2], offspring[1::2]):
+    for child in |:
 
         # Cross two individuals with probability CXPB
         if random.random() < CXPB:
