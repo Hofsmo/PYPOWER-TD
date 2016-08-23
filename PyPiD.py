@@ -42,7 +42,7 @@ def compare(individual, y, t):
 
 toolbox.register("evaluate", compare)
 toolbox.register("mate", tools.cxBlend, alpha=0.5)
-toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.5)
+toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.1, indpb=0.5)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 
@@ -55,7 +55,7 @@ def main():
 
     pop = toolbox.population(n=100)
 
-    CXPB, MUTPB, NGEN = 0.5, 0.05, 100
+    CXPB, MUTPB, NGEN = 0.5, 0.5, 40
 
     print("Start of evolution")
 
@@ -74,15 +74,15 @@ def main():
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
-    for child1, child2 in zip(offspring[::2], offspring[1::2]):
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
 
-        # Cross two individuals with probability CXPB
-        if random.random() < CXPB:
-            toolbox.mate(child1, child2)
+            # Cross two individuals with probability CXPB
+            if random.random() < CXPB:
+                toolbox.mate(child1, child2)
 
-            # fitness values of the children must be calculated later
-            del child1.fitness.values
-            del child2.fitness.values
+                # fitness values of the children must be calculated later
+                del child1.fitness.values
+                del child2.fitness.values
 
         for mutant in offspring:
 
@@ -125,7 +125,7 @@ def main():
 
     t, y_est = control.step_response(sys, t)
 
-    plt.plot(t, y, 'r',  y_est, 'b')
+    plt.plot(t, y, 'r', t,  y_est, 'b')
     plt.show()
 
 if __name__ == "__main__":
