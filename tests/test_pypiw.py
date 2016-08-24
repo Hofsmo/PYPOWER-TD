@@ -9,6 +9,7 @@ except:
     raise
 
 
-def test_init():
+def test_pypiw():
     a = pypiw.PyPiW()
-    assert(a.data != 1)
+    assert(not a.in_data)
+    assert(not a.out_data)
