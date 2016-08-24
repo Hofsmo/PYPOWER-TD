@@ -4,4 +4,4 @@ python:
 
 install: pip install --user
 
- script: pytest
+ script: py.test
