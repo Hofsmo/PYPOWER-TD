@@ -20,23 +20,13 @@ class PyPiW():
         self.ts = ts
         self.conf = conf
 
-    def identify(conf=[]):
+    def identify(self, conf=[]):
         """
         Function to perform the identification
         Input:
             conf: Configuration structure for the identification
         """
-        # Make it a minimization problem
-        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-        creator.create("Individual", list,  fitness=creator.FitnessMin)
-
-        # Create functions for creating individuals and population
-        toolbox = base.Toolbox()
-        toolbox.register("attr_bool", random.uniform, conf.lower, conf.upper)
-        toolbox.register("individual", tools.initRepeat, creator.Individual,
-                         toolbox.attr_bool, 2)
-        toolbox.register("population", tools.initRepeat, list,
-                         toolbox.individual)
+        return []
 
 
 class PyPiWTf(PyPiW):
@@ -55,3 +45,19 @@ class PyPiWTf(PyPiW):
         """
         PyPiW.__init__(self, in_data, out_data, ts, conf)
         self.tf = tf
+       
+    def identify(self, conf=[]):
+        if not conf:
+            conf = self.conf
+
+        # Make it a minimization problem
+        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+        creator.create("Individual", list,  fitness=creator.FitnessMin)
+
+        # Create functions for creating individuals and population
+        toolbox = base.Toolbox()
+        toolbox.register("attr_bool", random.uniform, conf.lower, conf.upper)
+        toolbox.register("individual", tools.initRepeat, creator.Individual,
+                         toolbox.attr_bool, 2)
+        toolbox.register("population", tools.initRepeat, list,
+                         toolbox.individual)
