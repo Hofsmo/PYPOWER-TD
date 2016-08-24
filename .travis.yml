@@ -6,8 +6,8 @@ python:
   - "2.7"
 
 before_install:
-  sudo apt-get update -q
-  sudo apt install libblas-dev liblapack-dev
+  - sudo apt-get -yy update
+  - sudo apt-get install -y libblas-dev liblapack-dev
 
 install:
   - pip install .
