@@ -1,10 +1,13 @@
 language: python
 os:
   - linux
-  - osx
 python:
   - "3.4"
   - "2.7"
+
+before_install:
+  sudo apt-get update -q
+  sudo apt install libblas-dev liblapack-dev
 
 install:
   - pip install .
