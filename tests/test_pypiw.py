@@ -2,7 +2,7 @@ import sys
 import os
 
 # PEP8 requires all imports to be at the top.
-sys.path.append(os.path.abspath('..'))
+sys.path.append(os.path.abspath(".."))
 try:
     from pypiw import pypiw
 except:
