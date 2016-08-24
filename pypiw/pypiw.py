@@ -45,7 +45,7 @@ class PyPiWTf(PyPiW):
         """
         PyPiW.__init__(self, in_data, out_data, ts, conf)
         self.tf = tf
-       
+
     def identify(self, conf=[]):
         if not conf:
             conf = self.conf
