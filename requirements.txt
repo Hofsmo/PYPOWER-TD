@@ -1,5 +1,6 @@
+scipy
+numpy
 sympy
 deap
 control
-numpy
 matplotlib

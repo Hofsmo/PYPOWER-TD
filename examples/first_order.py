@@ -1,12 +1,8 @@
-from deap import base, creator, tools
 import control
 import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Make it a minimization problem
-creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
-creator.create("Individual", list,  fitness=creator.FitnessMax)
 
 
 def create_ind():
@@ -17,13 +13,6 @@ def create_ind():
 
     return i
 
-# Create functions for creating individuals and population
-toolbox = base.Toolbox()
-toolbox.register("attr_bool", create_ind)
-toolbox.register("individual", tools.initRepeat, creator.Individual,
-                 toolbox.attr_bool, 2)
-toolbox.register("population", tools.initRepeat, list,
-                 toolbox.individual)
 
 
 # Define the fitness function
