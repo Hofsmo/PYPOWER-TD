@@ -1,12 +1,4 @@
-import sys
-import os
-
-# PEP8 requires all imports to be at the top.
-sys.path.append(os.path.abspath(".."))
-try:
-    from pypiw import pypiw
-except:
-    raise
+from pypiw import pypiw
 
 
 def test_pypiw():
