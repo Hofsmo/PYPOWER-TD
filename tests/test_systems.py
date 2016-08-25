@@ -24,4 +24,4 @@ def test_time_response(sys):
 
     y_sys = sys.time_response([-3, 2], x, t)
 
-    np.testing.assert_array_equal(y, y_sys)
+    np.testing.assert_allclose(y, y_sys)
