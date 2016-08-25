@@ -25,7 +25,7 @@ def test_time_response(tf):
 
     # The order of the parameters is different in some versions of Python.
     # This does not matter for the identification
-    if sys.version_info >= (3, 5):
+    if sys.version_info >= (3, 0):
         y_sys = tf.time_response([-3.0, 2.0], x, t)
     else:
         y_sys = tf.time_response([2.0, -3.0], x, t)
