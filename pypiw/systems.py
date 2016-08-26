@@ -25,6 +25,31 @@ class Tf(SystemBase):
     """
     def __init__(self, sys):
         self.sys = sys
+        s = sympy.symbols('s')
+        try:
+            num = sympy.degree(sympy.numer(sys), s)
+        except TypeError:
+            print("System is not a sympy object")
+
+        den = sympy.degree(sympy.denom(sys), s)
+
+        if den < num:
+            raise ValueError("System is not proper")
+
+        self.f = sympy.lambdify(
+            self.sys.atoms(
+                sympy.Symbol).difference({s}), self.sys, "numpy")
+
+    def num_den(self, parameters):
+        # Extract the numerator and denominator
+        temp = self.f(*parameters)
+
+        # The control toolbox does not understand sympy integers. Therefore
+        # it is necessary to convert
+        num = np.asarray(sympy.Poly(sympy.numer(temp)).all_coeffs(), float)
+        den = np.asarray(sympy.Poly(sympy.denom(temp)).all_coeffs(), float)
+
+        return num, den
 
     def time_response(self, parameters, x, t):
         """
@@ -36,26 +61,15 @@ class Tf(SystemBase):
         Output:
             numpy array containint the time response
         """
-        # Define the laplace operator
-        s = sympy.symbols('s')
+        num, den = self.num_den(parameters)
 
-        # Create lambda to generate transfer function
-        try:
-            f = sympy.lambdify(
-                self.sys.atoms(
-                    sympy.Symbol).difference({s}), self.sys, "numpy")
-        except TypeError:
-            print("Could not read system")
+        if len(num) < len(den):
+            parameters[-1] = 0.0001
+            num, den = self.num_den(parameters)
 
-        # Extract the numerator and denominator
-        temp = f(*parameters)
-
-        # The control toolbox does not understand sympy integers. Therefore
-        # it is necessary to convert
-        num = np.asarray(sympy.Poly(sympy.numer(temp)).all_coeffs(), float)
-        den = np.asarray(sympy.Poly(sympy.denom(temp)).all_coeffs(), float)
+        # _, y, _ = control.forced_response(
+        #    control.tf(num, den), t,  x)
 
         _, y, _ = control.forced_response(
-            control.tf(num, den), t,  x)
-
+            control.tf([parameters[0], 1], [parameters[1], 1]), t,  x)
         return y
