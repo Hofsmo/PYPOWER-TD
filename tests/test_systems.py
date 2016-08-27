@@ -3,7 +3,7 @@ import pytest
 import sympy
 import control
 from collections import namedtuple
-from pypiw import systems, algorithms
+from pypiw import systems
 import numpy as np
 
 
@@ -39,9 +39,3 @@ def test_time_response(tf, data_vec):
         y_sys = tf.time_response([2.0, -3.0], data_vec.x, data_vec.t)
 
     np.testing.assert_allclose(data_vec.y, y_sys)
-
-
-def test_ga(tf, data_vec):
-    ga = algorithms.Ga(data_vec.x, data_vec.y, data_vec.t, tf, -5, 5)
-    ga.identify()
-    np.testing.assert_allclose([-3.0, 2.0], ga.best_ind)

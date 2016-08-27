@@ -1,22 +1,25 @@
-from deap import base, creator, tools, algorithms
+"""
+Module containing the available algorithms
+"""
 import random
+from deap import base, creator, tools, algorithms
 import numpy as np
 
 
-class Ga():
+class Ga(object):
     """
     Class that implements the genetic algorithm presented in DEAP one max
     problem.
     """
-    def __init__(self, in_data=[], out_data=[], t=[], sys=[], lower=[],
-                 upper=[], ngen=40, nind=300, cxpb=0.5, mutpb=0.1, indpb=0.5,
+    def __init__(self, in_data, out_data, time, sys, lower, upper,
+                 ngen=40, nind=300, cxpb=0.5, mutpb=0.2, indpb=0.5,
                  tournsize=3):
         """
         Initialize the object
         Input:
             in_data: Array of in data
             out_data: Array of response data
-            t: Time vector
+            time: Time vector
             sys: Transfer function given as sympy
             lower: Lower bound of the parameters
             upper: Upper bound of the parameters
@@ -31,7 +34,7 @@ class Ga():
         """
         self.in_data = in_data
         self.out_data = out_data
-        self.t = t
+        self.time = time
         self.sys = sys
         self.lower = lower
         self.upper = upper
@@ -41,7 +44,7 @@ class Ga():
         self.mutpb = mutpb
         self.indpb = indpb
         self.tournsize = tournsize
-        self.best_ind = []
+        self.hof = tools.HallOfFame(1)
 
         # Make it a minimization problem
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
@@ -53,7 +56,9 @@ class Ga():
                               random.uniform, self.lower, self.upper)
         self.toolbox.register("individual",
                               tools.initRepeat,
-                              creator.Individual, self.toolbox.attr_bool, 2)
+                              creator.Individual,
+                              self.toolbox.attr_bool,
+                              self.sys.n_atoms)
         self.toolbox.register("population",
                               tools.initRepeat, list, self.toolbox.individual)
 
@@ -73,74 +78,17 @@ class Ga():
         """
         return np.std(
             self.sys.time_response(
-                individual, self.in_data, self.t) - self.out_data),
+                individual, self.in_data, self.time) - self.out_data),
 
-    def identify(self, v=False):
-
-        # if v:
-            # print("Start of evolution")
-
-        # fitnesses = [self.compare(ind) for ind in self.pop]
-        # for ind, fit in zip(self.pop, fitnesses):
-            # ind.fitness.values = fit
-
-        # print("Evaluated %i individuals" % len(self.pop))
-
-        # # Begin the evolution
-        # for g in range(self.ngen):
-            # print("-- Generation %i --" % g)
-
-            # # Select the next generation individuals
-            # offspring = self.toolbox.select(self.pop, len(self.pop))
-            # # Clone the selected individuals
-            # offspring = list(map(self.toolbox.clone, offspring))
-
-            # for child1, child2 in zip(offspring[::2], offspring[1::2]):
-                # # Cross two individuals with probability CXPB
-                # if random.random() < self.cxpb:
-                    # self.toolbox.mate(child1, child2)
-
-                    # # fitness values of the children must be calculated later
-                    # del child1.fitness.values
-                    # del child2.fitness.values
-
-                # for mutant in offspring:
-
-                    # # mutate an individual with probability MUTPB
-                    # if random.random() < self.mutpb:
-                        # self.toolbox.mutate(mutant)
-                        # del mutant.fitness.values
-
-            # # Evaluate the individuals with an invalid fitness
-            # invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-            # fitnesses = [self.compare(ind) for ind in invalid_ind]
-            # for ind, fit in zip(invalid_ind, fitnesses):
-                # ind.fitness.values = fit
-
-            # print("Evaluated %i individuals" % len(invalid_ind))
-
-            # # The population is entirely replaced by the offspring
-            # self.pop[:] = offspring
-
-            # # Gather all the fitnesses in one list and print the stats
-            # fits = [ind.fitness.values[0] for ind in self.pop]
-
-            # length = len(self.pop)
-            # mean = sum(fits) / length
-            # sum2 = sum(x*x for x in fits)
-            # std = abs(sum2 / length - mean**2)**0.5
-
-            # if v:
-                # print(" Min %s" % min(fits))
-                # print(" Max %s" % max(fits))
-                # print(" Avg %s" % mean)
-                # print(" Std %s" % std)
-
-        # if v:
-            # print("-- End of (successful) evaluation --")
+    def identify(self, verbose=False):
+        """
+        Function performing the idenfication
+        """
         stats = tools.Statistics(lambda ind: ind.fitness.values)
         stats.register("std", np.std)
+        stats.register("min", np.min)
+
         self.pop = algorithms.eaSimple(self.pop, self.toolbox, cxpb=self.cxpb,
                                        mutpb=self.mutpb, ngen=self.ngen,
-                                       stats=stats, verbose=True)
-        self.best_ind = tools.selBest(self.pop, 1)[0]
+                                       stats=stats, verbose=verbose,
+                                       halloffame=self.hof)

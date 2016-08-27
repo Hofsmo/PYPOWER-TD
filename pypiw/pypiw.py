@@ -1,10 +1,13 @@
+"""
+The main module for PyPiW
+"""
 
 
-class PyPiW():
+class PyPiW(object):
     """
     Class responsible for performing the identification.
     """
-    def __init__(self, in_data=[], out_data=[], ts=[], alg=[]):
+    def __init__(self, in_data, out_data, time, alg):
         """
         Constructor of PyPiW
         Input:
@@ -16,7 +19,7 @@ class PyPiW():
         """
         self.in_data = in_data
         self.out_data = out_data
-        self.ts = ts
+        self.time = time
         self.alg = alg
 
     def identify(self):

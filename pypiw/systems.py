@@ -1,3 +1,6 @@
+"""
+Module containing the different system representations
+"""
 from abc import ABCMeta, abstractmethod
 import six
 import sympy
@@ -10,6 +13,9 @@ class SystemBase():
     """
     Base class for system representations
     """
+    @abstractmethod
+    def __init__(self):
+        pass
 
     @abstractmethod
     def time_response(self):
@@ -36,9 +42,9 @@ class Tf(SystemBase):
         if den < num:
             raise ValueError("System is not proper")
 
-        self.f = sympy.lambdify(
-            self.sys.atoms(
-                sympy.Symbol).difference({s}), self.sys, "numpy")
+        self.atoms = self.sys.atoms(sympy.Symbol).difference({s})
+        self.n_atoms = len(self.atoms)
+        self.f = sympy.lambdify(self.atoms, self.sys, "numpy")
 
     def num_den(self, parameters):
         # Extract the numerator and denominator
@@ -67,9 +73,7 @@ class Tf(SystemBase):
             parameters[-1] = 0.0001
             num, den = self.num_den(parameters)
 
-        # _, y, _ = control.forced_response(
-        #    control.tf(num, den), t,  x)
-
         _, y, _ = control.forced_response(
-            control.tf([parameters[0], 1], [parameters[1], 1]), t,  x)
+            control.tf(num, den), t, x)
+
         return y

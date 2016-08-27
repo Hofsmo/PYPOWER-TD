@@ -16,8 +16,8 @@ def main():
 
     tf = systems.Tf(sys)
     ga = algorithms.Ga(x, y, t, tf, -5.0, 5.0)
-    ga.identify(v=True)
-    print(ga.best_ind)
+    ga.identify(verbose=True)
+    print(ga.hof[0])
 
 if __name__ == "__main__":
     main()
