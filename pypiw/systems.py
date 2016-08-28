@@ -43,6 +43,7 @@ class Tf(SystemBase):
             raise ValueError("System is not proper")
 
         self.atoms = self.sys.atoms(sympy.Symbol).difference({s})
+        self.atoms_list = [str(atom) for atom in self.atoms]
         self.n_atoms = len(self.atoms)
         self.f = sympy.lambdify(self.atoms, self.sys, "numpy")
 

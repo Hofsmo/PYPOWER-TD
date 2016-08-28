@@ -27,8 +27,8 @@ def data_vec():
 def test_ga(tf, data_vec):
     ga = algorithms.Ga(data_vec.x, data_vec.y, data_vec.t, tf, -5, 5)
     ga.identify()
-    solution = {'T1': 2.0, 'T2': -3.0}
-    keys = {str(atom) for atom in ga.sys.atoms}
-    answer = {key: value for (key, value) in zip(keys, ga.hof[0])}
-    for key in keys:
-        np.testing.assert_almost_equal(solution[key], answer[key], 1)
+
+    if tf.atoms_list[0] == 'T1':
+        np.testing.assert_almost_equal(ga.hof[0][0], 2.0, 1)
+    else:
+        np.testing.assert_almost_equal(ga.hof[0][0], -3.0, 1)
