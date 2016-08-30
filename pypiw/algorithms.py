@@ -1,19 +1,52 @@
 """
 Module containing the available algorithms
 """
+from abc import ABCMeta, abstractmethod
 import random
+import six
 from deap import base, creator, tools, algorithms
 import numpy as np
 
 
-class Ga(object):
+@six.add_metaclass(ABCMeta)
+class AlgorithmBase():
+    """
+    Base class for algorithms
+    """
+    def __init__(self, in_data, out_data, time, sys, lower, upper):
+        """
+        Constructor for the algorithm base class
+        """
+        self.in_data = in_data
+        self.out_data = out_data
+        self.time = time
+        self.sys = sys
+        self.lower = lower
+        self.upper = upper
+
+    @abstractmethod
+    def compare(self, parameter):
+        """
+        All algortihms should provide a compare method
+        """
+        pass
+
+    @abstractmethod
+    def identify(self, verbose):
+        """
+        All algortihms should provide an identify method
+        """
+        pass
+
+
+class Ga(AlgorithmBase):
     """
     Class that implements the genetic algorithm presented in DEAP one max
     problem.
     """
     def __init__(self, in_data, out_data, time, sys, lower, upper,
-                 ngen=40, nind=300, cxpb=0.5, mutpb=0.2, indpb=0.5,
-                 tournsize=3):
+                 ngen=40, nind=300, cxpb=0.5, alpha=0.5, mutpb=0.2, mu=0,
+                 sigma=0.1, indpb=0.5, tournsize=3):
         """
         Initialize the object
         Input:
@@ -32,23 +65,21 @@ class Ga(object):
             mutation: The mutation strategy the default is gaussian
 
         """
-        self.in_data = in_data
-        self.out_data = out_data
-        self.time = time
-        self.sys = sys
-        self.lower = lower
-        self.upper = upper
+        super(Ga, self).__init__(in_data, out_data, time, sys, lower, upper)
         self.ngen = ngen
         self.nind = nind
         self.cxpb = cxpb
+        self.alpha = alpha
         self.mutpb = mutpb
+        self.mu = mu
+        self.sigma = sigma
         self.indpb = indpb
         self.tournsize = tournsize
         self.hof = tools.HallOfFame(1)
 
         # Make it a minimization problem
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-        creator.create("Individual", list,  fitness=creator.FitnessMin)
+        creator.create("Individual", list, fitness=creator.FitnessMin)
 
         # Create functions for creating individuals and population
         self.toolbox = base.Toolbox()
@@ -63,9 +94,9 @@ class Ga(object):
                               tools.initRepeat, list, self.toolbox.individual)
 
         # Register the crossover and mutation functions
-        self.toolbox.register("mate", tools.cxBlend, alpha=0.5)
-        self.toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.1,
-                              indpb=self.indpb)
+        self.toolbox.register("mate", tools.cxBlend, alpha=self.alpha)
+        self.toolbox.register("mutate", tools.mutGaussian, mu=self.mu,
+                              sigma=self.sigma, indpb=self.indpb)
 
         self.toolbox.register("select", tools.selTournament,
                               tournsize=self.tournsize)
