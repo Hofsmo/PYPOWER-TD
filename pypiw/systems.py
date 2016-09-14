@@ -1,6 +1,5 @@
-"""
-Module containing the different system representations
-"""
+"""Module containing the different system representations."""
+
 from abc import ABCMeta, abstractmethod
 import six
 import sympy
@@ -10,18 +9,14 @@ import numpy as np
 
 @six.add_metaclass(ABCMeta)
 class SystemBase():
-    """
-    Base class for system representations
-    """
+    """Base class for system representations."""
     @abstractmethod
     def __init__(self):
         pass
 
     @abstractmethod
     def time_response(self):
-        """
-        This method calculates the time response of the system
-        """
+        """This method calculates the time response of the system."""
         pass
 
 
@@ -59,13 +54,13 @@ class Tf(SystemBase):
         return num, den
 
     def time_response(self, parameters, x, t):
-        """
-        Method that calculates the time response of the system
-        Input:
+        """Method that calculates the time response of the system.
+
+        Args:
             parameters: Value of the parameters in the system
             x: Input vector
             t: Time vector
-        Output:
+        Returns:
             numpy array containint the time response
         """
         num, den = self.num_den(parameters)

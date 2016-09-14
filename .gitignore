@@ -9,3 +9,6 @@
 
 # Ignore the tox folder
 .tox/*
+
+# Ignore some sphinx stuff
+docs/build/
