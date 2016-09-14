@@ -10,6 +10,5 @@ before_install:
   - sudo apt-get install -y libblas-dev liblapack-dev
 
 install:
-  - pip install .
-  - pip install -r requirements.txt
-script: py.test
+  - pip install tox-travis
+script: tox
