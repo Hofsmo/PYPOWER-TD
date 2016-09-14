@@ -1,7 +1,6 @@
 """
 Module for testing the systems module
 """
-import sys
 from collections import namedtuple
 import pytest
 import sympy
@@ -39,19 +38,21 @@ def data_vec():
 def test_init(tf):
     assert(isinstance(tf.sys, tuple(sympy.core.all_classes)))
 
+
 def test_num_den(tf):
     num, den = tf.num_den([2.0, -3.0])
-    
+
     if tf.atoms_list[0] == 'T1':
         np.testing.assert_almost_equal(num[0], 2.0)
     else:
         np.testing.assert_almost_equal(num[0], -3.0)
 
+
 def test_time_response(tf, data_vec):
 
     # The order of the parameters is different in some versions of Python.
     # This does not matter for the identification
-    if tf.atoms_list[0] =='T2':
+    if tf.atoms_list[0] == 'T2':
         y_sys = tf.time_response([-3.0, 2.0], data_vec.x, data_vec.t)
     else:
         y_sys = tf.time_response([2.0, -3.0], data_vec.x, data_vec.t)
