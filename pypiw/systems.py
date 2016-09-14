@@ -15,16 +15,15 @@ class SystemBase():
         pass
 
     @abstractmethod
-    def time_response(self):
+    def time_response(self, parameters, x, t):
         """This method calculates the time response of the system."""
         pass
 
 
 class Tf(SystemBase):
-    """
-    Class for transfer function representation
-    """
+    """Class for transfer function representation."""
     def __init__(self, sys):
+        super(Tf, self).__init__()
         self.sys = sys
         s = sympy.symbols('s')
         try:
@@ -43,6 +42,18 @@ class Tf(SystemBase):
         self.f = sympy.lambdify(self.atoms, self.sys, "numpy")
 
     def num_den(self, parameters):
+        """Returns the numerator and denominator coefficients.
+
+        Method that takes in the estimated parameters and calculates
+        the denominator and numerator coefficients
+
+        Args:
+           parameters: estimated parameters
+
+        Returns:
+            num: numerator coefficients
+            den: denominator coefficients
+        """
         # Extract the numerator and denominator
         temp = self.f(*parameters)
 
@@ -60,6 +71,7 @@ class Tf(SystemBase):
             parameters: Value of the parameters in the system
             x: Input vector
             t: Time vector
+
         Returns:
             numpy array containint the time response
         """
