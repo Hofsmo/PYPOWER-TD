@@ -25,18 +25,15 @@ class AlgorithmBase():
         self.upper = upper
 
     @abstractmethod
-    def compare(self, parameter):
-        """
-        All algortihms should provide a compare method
-        """
+    def identify(self, verbose):
+        """All algortihms should provide an identify method."""
         pass
 
-    @abstractmethod
-    def identify(self, verbose):
-        """
-        All algortihms should provide an identify method
-        """
-        pass
+    def compare(self, parameter):
+        """Method that compares the individuals with the correct value."""
+        return np.std(
+            self.sys.time_response(
+                parameter, self.in_data, self.time) - self.out_data),
 
 
 class Ga(AlgorithmBase):
@@ -103,13 +100,6 @@ class Ga(AlgorithmBase):
 
         self.pop = self.toolbox.population(n=self.nind)
         self.toolbox.register("evaluate", self.compare)
-
-    def compare(self, individual):
-        """ function that compares the individuals with the correct value
-        """
-        return np.std(
-            self.sys.time_response(
-                individual, self.in_data, self.time) - self.out_data),
 
     def identify(self, verbose=False):
         """
