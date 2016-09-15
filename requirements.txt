@@ -1,1 +1,6 @@
+scipy
+numpy
 sympy
+deap
+control
+matplotlib

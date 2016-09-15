@@ -6,3 +6,12 @@
 *.egg-info
 *.pyc
 .cache
+
+# Ignore the tox folder
+.tox/*
+
+# Ignore some sphinx stuff
+docs/build/
+
+# Ignore coverage file
+.coverage
