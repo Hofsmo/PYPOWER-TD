@@ -26,10 +26,7 @@ class Tf(SystemBase):
         super(Tf, self).__init__()
         self.sys = sys
         s = sympy.symbols('s')
-        try:
-            num = sympy.degree(sympy.numer(sys), s)
-        except TypeError:
-            print("System is not a sympy object")
+        num = sympy.degree(sympy.numer(sys), s)
 
         den = sympy.degree(sympy.denom(sys), s)
 
@@ -40,6 +37,18 @@ class Tf(SystemBase):
         self.atoms_list = [str(atom) for atom in self.atoms]
         self.n_atoms = len(self.atoms)
         self.f = sympy.lambdify(self.atoms, self.sys, "numpy")
+
+    @property
+    def sys(self):
+        """System property"""
+        return self._sys
+
+    @sys.setter
+    def sys(self, value):
+        """Setter for sys"""
+        if not isinstance(value, tuple(sympy.core.all_classes)):
+            raise TypeError("sys is not a sympy object")
+        self._sys = value
 
     def num_den(self, parameters):
         """Returns the numerator and denominator coefficients.

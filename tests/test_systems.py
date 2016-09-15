@@ -9,11 +9,9 @@ from pypiw import systems
 import numpy as np
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def tf():
-    """
-    Create the transfer funcion to use for the tests
-    """
+    """Create the transfer funcion to use for the tests."""
     s, T1, T2 = sympy.symbols('s T1 T2')
 
     return systems.Tf((1+s*T1)/(1+s*T2))
@@ -21,9 +19,7 @@ def tf():
 
 @pytest.fixture(scope='session')
 def data_vec():
-    """
-    Create the data to use in the tests
-    """
+    """Create the data to use in the tests"""
     temp = namedtuple('temp', 't x c_tf y')
     temp.t = np.arange(0, 0.5, 0.2)
     temp.x = np.ones(len(temp.t))
@@ -35,8 +31,21 @@ def data_vec():
     return temp
 
 
-def test_init(tf):
-    assert(isinstance(tf.sys, tuple(sympy.core.all_classes)))
+def test_sys_get(tf):
+    """Test if sys returns correct object"""
+    assert isinstance(tf.sys, tuple(sympy.core.all_classes))
+
+
+def test_sys_error(tf):
+    """Test if exception is raised"""
+    with pytest.raises(Exception):
+        tf.sys = True
+
+def test_not_proper():
+    """Test what happens if the system is not proper."""
+    s = sympy.symbols('s')
+    with pytest.raises(Exception):
+        systems.Tf(s)
 
 
 def test_num_den(tf):

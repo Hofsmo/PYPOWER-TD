@@ -1,13 +1,15 @@
+"""Module for testing algorithms."""
+from collections import namedtuple
 import pytest
 import sympy
 import control
 import numpy as np
-from collections import namedtuple
 from pypiw import systems, algorithms
 
 
 @pytest.fixture(scope='session')
 def tf():
+    """Create transfer function."""
     s, T1, T2 = sympy.symbols('s T1 T2')
 
     return systems.Tf((1+s*T1)/(1+s*T2))
@@ -15,6 +17,7 @@ def tf():
 
 @pytest.fixture(scope='session')
 def data_vec():
+    """Create data for testing"""
     data = namedtuple('data', 't x c_tf y')
     data.t = np.arange(0, 10, 0.02)
     data.x = np.ones(len(data.t))
@@ -24,11 +27,25 @@ def data_vec():
     return data
 
 
-def test_ga(tf, data_vec):
-    ga = algorithms.Ga(data_vec.x, data_vec.y, data_vec.t, tf, -5, 5)
-    ga.identify()
+@pytest.fixture(scope='session')
+def ga(data_vec, tf):
+    """ Create the algorithm object to test"""
+    return algorithms.Ga(data_vec.x, data_vec.y, data_vec.t, tf, -5, 5)
 
+
+def test_compare(ga, tf):
+    """Test the compare method"""
     if tf.atoms_list[0] == 'T1':
-        np.testing.assert_almost_equal(ga.hof[0][0], 2.0, 1)
+        np.testing.assert_almost_equal(
+            super(algorithms.Ga, ga).compare([2.0, -3.0]), 0)
     else:
-        np.testing.assert_almost_equal(ga.hof[0][0], -3.0, 1)
+        np.testing.assert_almost_equal(
+            super(algorithms.Ga, ga).compare([-3.0, 2.0]), 0)
+
+
+def test_ga(ga, tf):
+    ga.identify()
+    if tf.atoms_list[0] == 'T1':
+        np.testing.assert_almost_equal(ga.hof[0][0], 2.0, 0)
+    else:
+        np.testing.assert_almost_equal(ga.hof[0][0], -3.0, 0)
