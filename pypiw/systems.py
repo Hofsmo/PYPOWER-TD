@@ -1,6 +1,5 @@
-"""
-Module containing the different system representations
-"""
+"""Module containing the different system representations."""
+
 from abc import ABCMeta, abstractmethod
 import six
 import sympy
@@ -10,26 +9,21 @@ import numpy as np
 
 @six.add_metaclass(ABCMeta)
 class SystemBase():
-    """
-    Base class for system representations
-    """
+    """Base class for system representations."""
     @abstractmethod
     def __init__(self):
         pass
 
     @abstractmethod
-    def time_response(self):
-        """
-        This method calculates the time response of the system
-        """
+    def time_response(self, parameters, x, t):
+        """This method calculates the time response of the system."""
         pass
 
 
 class Tf(SystemBase):
-    """
-    Class for transfer function representation
-    """
+    """Class for transfer function representation."""
     def __init__(self, sys):
+        super(Tf, self).__init__()
         self.sys = sys
         s = sympy.symbols('s')
         try:
@@ -48,6 +42,18 @@ class Tf(SystemBase):
         self.f = sympy.lambdify(self.atoms, self.sys, "numpy")
 
     def num_den(self, parameters):
+        """Returns the numerator and denominator coefficients.
+
+        Method that takes in the estimated parameters and calculates
+        the denominator and numerator coefficients
+
+        Args:
+           parameters: estimated parameters
+
+        Returns:
+            num: numerator coefficients
+            den: denominator coefficients
+        """
         # Extract the numerator and denominator
         temp = self.f(*parameters)
 
@@ -59,13 +65,14 @@ class Tf(SystemBase):
         return num, den
 
     def time_response(self, parameters, x, t):
-        """
-        Method that calculates the time response of the system
-        Input:
+        """Method that calculates the time response of the system.
+
+        Args:
             parameters: Value of the parameters in the system
             x: Input vector
             t: Time vector
-        Output:
+
+        Returns:
             numpy array containint the time response
         """
         num, den = self.num_den(parameters)

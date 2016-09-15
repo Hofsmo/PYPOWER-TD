@@ -1,6 +1,7 @@
 """
 The main module for PyPiW
 """
+import matplotlib.pyplot as plt
 
 
 class PyPiW(object):
