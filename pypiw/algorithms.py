@@ -29,6 +29,11 @@ class AlgorithmBase():
         """All algortihms should provide an identify method."""
         pass
 
+    @abstractmethod
+    def identified_parameters(self):
+        """ All algorithms should be able to return the best individual."""
+        pass
+
     def compare(self, parameter):
         """Method that compares the individuals with the correct value."""
         return np.std(
@@ -113,3 +118,8 @@ class Ga(AlgorithmBase):
                                        mutpb=self.mutpb, ngen=self.ngen,
                                        stats=stats, verbose=verbose,
                                        halloffame=self.hof)
+
+    def identified_parameters(self):
+        """Return the best identified parameter."""
+        return {key: value for (key, value) in zip(self.sys.atoms_list,
+                                                   self.hof[0])}

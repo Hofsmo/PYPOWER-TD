@@ -21,6 +21,7 @@ def data_vec():
     data = namedtuple('data', 't x c_tf y')
     data.t = np.arange(0, 10, 0.02)
     data.x = np.ones(len(data.t))
+    data.parameters = {'T1': 2.0, 'T2': -3.0}
     data.c_tf = control.tf([2.0, 1.0], [-3.0, 1.0])
     _, data.y, _ = control.forced_response(data.c_tf, data.t, data.x)
 
@@ -33,19 +34,12 @@ def ga(data_vec, tf):
     return algorithms.Ga(data_vec.x, data_vec.y, data_vec.t, tf, -5, 5)
 
 
-def test_compare(ga, tf):
+def test_compare(ga, tf, data_vec):
     """Test the compare method"""
-    if tf.atoms_list[0] == 'T1':
-        np.testing.assert_almost_equal(
-            super(algorithms.Ga, ga).compare([2.0, -3.0]), 0)
-    else:
-        np.testing.assert_almost_equal(
-            super(algorithms.Ga, ga).compare([-3.0, 2.0]), 0)
+    np.testing.assert_almost_equal(
+        super(algorithms.Ga, ga).compare(data_vec.parameters), 0)
 
 
 def test_ga(ga, tf):
     ga.identify()
-    if tf.atoms_list[0] == 'T1':
-        np.testing.assert_almost_equal(ga.hof[0][0], 2.0, 0)
-    else:
-        np.testing.assert_almost_equal(ga.hof[0][0], -3.0, 0)
+    np.testing.assert_almost_equal(ga.identified_parameters()['T2'], -3.0, 0)

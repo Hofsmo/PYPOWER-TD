@@ -63,8 +63,15 @@ class Tf(SystemBase):
             num: numerator coefficients
             den: denominator coefficients
         """
+        if isinstance(parameters, dict):
+            par = [None]*len(self.atoms_list)
+            for idx, atom in enumerate(self.atoms_list):
+                par[idx] = parameters[atom]
+        else:
+            par = parameters
+
         # Extract the numerator and denominator
-        temp = self.f(*parameters)
+        temp = self.f(*par)
 
         # The control toolbox does not understand sympy integers. Therefore
         # it is necessary to convert
