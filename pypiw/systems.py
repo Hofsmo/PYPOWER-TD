@@ -93,11 +93,25 @@ class Tf(SystemBase):
         """
         num, den = self.num_den(parameters)
 
-        if len(num) < len(den):
-            parameters[-1] = 0.0001
-            num, den = self.num_den(parameters)
-
         _, y, _ = control.forced_response(
             control.tf(num, den), t, x)
 
         return y
+
+    def step_response(self, parameters, t=None):
+        """Method that calculates the step response of a system.
+
+        Args:
+            parameters: Values of the paramateres describing the system.
+            This can either be a list or a dict. If it is a dict the keys
+            should correspond to the names of the parameters.
+            t: The time vector to calulate the response for
+
+        Returns:
+            y: The step response.
+            t: the time vector.
+            """
+        num, den = self._num_den(parameters)
+        t, y, _ = control.step_response(control.tf(num, den), t)
+
+        return t, y
