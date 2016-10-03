@@ -52,7 +52,7 @@ class AlgorithmBase():
                         if child[i] > max:
                             child[i] = max
                         elif child[i] < min:
-                            child[i] = min
+                            child[i] = min+0.00001
                 return offspring
             return wrapper
         return decorator
