@@ -50,7 +50,7 @@ class AlgorithmBase():
                 for child in offspring:
                     for i in range(len(child)):
                         if child[i] > max:
-                            child[i] = max
+                            child[i] = max-0.00001
                         elif child[i] < min:
                             child[i] = min+0.00001
                 return offspring
