@@ -19,7 +19,7 @@ def tf():
 def data_vec():
     """Create data for testing"""
     data = namedtuple('data', 't x c_tf y')
-    data.t = np.arange(0, 10, 0.02)
+    data.t = np.arange(0, 10, 0.1)
     data.x = np.ones(len(data.t))
     data.parameters = {'T1': 2.0, 'T2': -3.0}
     data.c_tf = control.tf([2.0, 1.0], [-3.0, 1.0])
