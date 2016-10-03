@@ -25,6 +25,7 @@ def data_vec():
     temp.x = np.ones(len(temp.t))
     temp.num = [2.0, 1.0]
     temp.den = [-3.0, 1.0]
+    temp.parameters = {'T1': 2.0, 'T2': -3.0}
     temp.c_tf = control.tf(temp.num, temp.den)
     _, temp.y, _ = control.forced_response(temp.c_tf, temp.t, temp.x)
 
@@ -41,6 +42,7 @@ def test_sys_error(tf):
     with pytest.raises(Exception):
         tf.sys = True
 
+
 def test_not_proper():
     """Test what happens if the system is not proper."""
     s = sympy.symbols('s')
@@ -48,22 +50,16 @@ def test_not_proper():
         systems.Tf(s)
 
 
-def test_num_den(tf):
-    num, den = tf.num_den([2.0, -3.0])
+def test_num_den(tf, data_vec):
+    """Check if num and den are correctly returned."""
+    num, den = tf.num_den(data_vec.parameters)
 
-    if tf.atoms_list[0] == 'T1':
-        np.testing.assert_almost_equal(num[0], 2.0)
-    else:
-        np.testing.assert_almost_equal(num[0], -3.0)
+    assert num[0] == data_vec.num[0] and den[0] == data_vec.den[0]
 
 
 def test_time_response(tf, data_vec):
+    """Check if time response is calculated correctly."""
 
-    # The order of the parameters is different in some versions of Python.
-    # This does not matter for the identification
-    if tf.atoms_list[0] == 'T2':
-        y_sys = tf.time_response([-3.0, 2.0], data_vec.x, data_vec.t)
-    else:
-        y_sys = tf.time_response([2.0, -3.0], data_vec.x, data_vec.t)
+    y_sys = tf.time_response(data_vec.parameters, data_vec.x, data_vec.t)
 
     np.testing.assert_allclose(data_vec.y, y_sys)
