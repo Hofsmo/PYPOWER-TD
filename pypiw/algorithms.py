@@ -29,11 +29,33 @@ class AlgorithmBase():
         """All algortihms should provide an identify method."""
         pass
 
+    @abstractmethod
+    def identified_parameters(self):
+        """ All algorithms should be able to return the best individual."""
+        pass
+
     def compare(self, parameter):
         """Method that compares the individuals with the correct value."""
         return np.std(
             self.sys.time_response(
                 parameter, self.in_data, self.time) - self.out_data),
+
+    def check_bounds(self, min, max):
+        """Check min max for parameter."""
+        def decorator(func):
+            """Decorator function."""
+            def wrapper(*args, **kargs):
+                """Wrapper function."""
+                offspring = func(*args, **kargs)
+                for child in offspring:
+                    for i in range(len(child)):
+                        if child[i] > max:
+                            child[i] = max-0.00001
+                        elif child[i] < min:
+                            child[i] = min+0.00001
+                return offspring
+            return wrapper
+        return decorator
 
 
 class Ga(AlgorithmBase):
@@ -95,13 +117,18 @@ class Ga(AlgorithmBase):
         self.toolbox.register("mutate", tools.mutGaussian, mu=self.mu,
                               sigma=self.sigma, indpb=self.indpb)
 
+        self.toolbox.decorate("mate",
+                              self.check_bounds(self.lower, self.upper))
+        self.toolbox.decorate("mutate",
+                              self.check_bounds(self.lower, self.upper))
+
         self.toolbox.register("select", tools.selTournament,
                               tournsize=self.tournsize)
 
         self.pop = self.toolbox.population(n=self.nind)
         self.toolbox.register("evaluate", self.compare)
 
-    def identify(self, verbose=False):
+    def identify(self, algorithm='simple', verbose=False):
         """
         Function performing the idenfication
         """
@@ -109,7 +136,19 @@ class Ga(AlgorithmBase):
         stats.register("std", np.std)
         stats.register("min", np.min)
 
-        self.pop = algorithms.eaSimple(self.pop, self.toolbox, cxpb=self.cxpb,
-                                       mutpb=self.mutpb, ngen=self.ngen,
-                                       stats=stats, verbose=verbose,
-                                       halloffame=self.hof)
+        if algorithm == 'simple':
+            self.pop = algorithms.eaSimple(self.pop, self.toolbox,
+                                           cxpb=self.cxpb,
+                                           mutpb=self.mutpb, ngen=self.ngen,
+                                           stats=stats, verbose=verbose,
+                                           halloffame=self.hof)
+        elif algorithm == 'generate':
+            self.pop = algorithms.eaGenerateUpdate(self.toolbox, self.ngen,
+                                                   self.hof)
+        else:
+            raise ValueError("No such algorithm")
+
+    def identified_parameters(self):
+        """Return the best identified parameter."""
+        return {key: value for (key, value) in zip(self.sys.atoms_list,
+                                                   self.hof[0])}

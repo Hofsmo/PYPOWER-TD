@@ -65,8 +65,15 @@ class Tf(SystemBase):
             num: numerator coefficients
             den: denominator coefficients
         """
+        if isinstance(parameters, dict):
+            par = [None]*len(self.atoms_list)
+            for idx, atom in enumerate(self.atoms_list):
+                par[idx] = parameters[atom]
+        else:
+            par = parameters
+
         # Extract the numerator and denominator
-        temp = self.f(*parameters)
+        temp = self.f(*par)
 
         # The control toolbox does not understand sympy integers. Therefore
         # it is necessary to convert
@@ -75,32 +82,30 @@ class Tf(SystemBase):
 
         return num, den
 
-    def time_response(self, parameters, x, t):
-        """Method that calculates the time response of the system.
+    def step_response(self, parameters, t=None):
+        """Method that calculates the step response of a system.
 
         Args:
-            parameters: Value of the parameters in the system
-            x: Input vector
-            t: Time vector
+            parameters: Values of the paramateres describing the system.
+            This can either be a list or a dict. If it is a dict the keys
+            should correspond to the names of the parameters.
+            t: The time vector to calulate the response for
 
         Returns:
-            numpy array containint the time response
-        """
-        num, den = self.num_den(parameters)
+            y: The step response.
+            t: the time vector.
+            """
+        num, den = self._num_den(parameters)
+        t, y, _ = control.step_response(control.tf(num, den), t)
 
-        if len(num) < len(den):
-            parameters[-1] = 0.0001
-            num, den = self.num_den(parameters)
+        return t, y
 
-        _, y, _ = control.forced_response(
-            control.tf(num, den), t, x)
-
-        return y
 
 class ModelicaSystem(SystemBase):
     '''
     Class implementing the Modelica FMUs as systems for the identification.
     '''
+
     def __init__(self, file_path, model_name, logging_on=False, stop_before_event=False, event_search_precision=1e-5,
                  integrator_type=fmipp.rk):
         '''
