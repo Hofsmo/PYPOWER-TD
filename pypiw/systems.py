@@ -4,7 +4,10 @@ from abc import ABCMeta, abstractmethod
 import six
 import sympy
 import control
+import os.path
 import numpy as np
+import fmipp
+
 
 
 @six.add_metaclass(ABCMeta)
@@ -18,7 +21,6 @@ class SystemBase():
     def time_response(self, parameters, x, t):
         """This method calculates the time response of the system."""
         pass
-
 
 class Tf(SystemBase):
     """Class for transfer function representation."""
@@ -94,3 +96,45 @@ class Tf(SystemBase):
             control.tf(num, den), t, x)
 
         return y
+
+class ModelicaSystem(SystemBase):
+    '''
+    Class implementing the Modelica FMUs as systems for the identification.
+    '''
+    def __init__(self, file_path, model_name, logging_on=False, stop_before_event=False, event_search_precision=1e-5,
+                 integrator_type=fmipp.rk):
+        '''
+        Instantiates a ModelicaSystem object and loads/compiles an FMU.
+        :param file_path: File path to the modelica/fmu file.
+        :param model_name: Name of the model in the FMU.
+        '''
+        self.file_path = file_path
+        self.model_name = model_name
+        self.compiled = compiled
+
+        assert os.path.exists(file_path), 'File path does not exist!'
+
+        # Extract the FMU
+        self.extracted_fmu = fmipp.extractFMU(file_path, os.path.dirname(file_path))
+        self.logging_on = logging_on
+        self.stop_before_event = stop_before_event
+        self.event_search_precision = event_search_precision
+        self.integrator_type = integrator_type
+        self.fmu = fmipp.FMUModelExchangeV1(self.uri_to_extracted_fmu, self.model_name, self.logging_on,
+                                            self.stop_before_event, self.event_search_precision, self.integrator_type)
+
+        status = self.fmu.instantiate("my_test_model_1")  # instantiate model
+        assert status == fmipp.fmiOK, 'The FMU could not be instantiated'
+
+    def time_response(self, parameters, x, t):
+        '''
+        Method that returns the response of the FMU
+        :param parameters: Model's parameters.
+        :param x: Input to the model.
+        :param t: Time vector
+        :return y: Returns the output of the model.
+        '''
+
+        result = self.fmu.simulate(start_time = 0.0, final_time = t[-1])
+
+        return result['y']
