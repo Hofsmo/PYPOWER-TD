@@ -7,10 +7,11 @@ import control
 import os.path
 import numpy as np
 import fmipp
+import shutil
 
 
 
-@six.add_metaclass(ABCMeta)
+
 class SystemBase():
     """Base class for system representations."""
     @abstractmethod
@@ -106,7 +107,7 @@ class ModelicaSystem(SystemBase):
     Class implementing the Modelica FMUs as systems for the identification.
     '''
 
-    def __init__(self, file_path, model_name, logging_on=False, stop_before_event=False, event_search_precision=1e-5,
+    def __init__(self, file_path, model_name, logging_on=False,event_search_precision=1e-7,
                  integrator_type=fmipp.rk):
         '''
         Instantiates a ModelicaSystem object and loads/compiles an FMU.
@@ -115,23 +116,18 @@ class ModelicaSystem(SystemBase):
         '''
         self.file_path = file_path
         self.model_name = model_name
-        self.compiled = compiled
 
         assert os.path.exists(file_path), 'File path does not exist!'
 
         # Extract the FMU
         self.extracted_fmu = fmipp.extractFMU(file_path, os.path.dirname(file_path))
         self.logging_on = logging_on
-        self.stop_before_event = stop_before_event
         self.event_search_precision = event_search_precision
         self.integrator_type = integrator_type
-        self.fmu = fmipp.FMUModelExchangeV1(self.uri_to_extracted_fmu, self.model_name, self.logging_on,
-                                            self.stop_before_event, self.event_search_precision, self.integrator_type)
+        self.fmu = fmipp.FMUModelExchangeV2(self.extracted_fmu, self.model_name, self.logging_on,
+                                        False,self.event_search_precision, self.integrator_type)
 
-        status = self.fmu.instantiate("my_test_model_1")  # instantiate model
-        assert status == fmipp.fmiOK, 'The FMU could not be instantiated'
-
-    def time_response(self, parameters, x, t):
+    def time_response(self, parameters, x, t, step_size):
         '''
         Method that returns the response of the FMU
         :param parameters: Model's parameters.
@@ -140,6 +136,38 @@ class ModelicaSystem(SystemBase):
         :return y: Returns the output of the model.
         '''
 
-        result = self.fmu.simulate(start_time = 0.0, final_time = t[-1])
+        status = self.fmu.instantiate(self.model_name)  # instantiate model
+        assert status == fmipp.fmiOK, "Could not instantiate the model"  # check status
 
-        return result['y']
+        self.setParams(parameters)  # set model parameters
+
+        status = self.fmu.initialize()  # initialize model
+        assert status == fmipp.fmiOK, "Could not initialize the model"  # check status
+
+        y = np.empty(len(t))
+
+        for index, t_step in enumerate(t):
+            self.fmu.setRealValue("u", x[index])
+            self.fmu.integrate(t_step)  # integrate model
+            y[index] = self.fmu.getRealValue("y")  # retrieve output variable 'x'
+
+        return y
+
+    def setParams(self, params):
+        '''
+        A function that sets the parameters in the fmu form the dictionary params.
+        Currently, only real parameters are supported.
+        :param params: Dictionary of parameters to be set in the fmu
+        '''
+
+        for name, value in params.items():
+            self.fmu.setRealValue(name, value)
+
+
+    def cleanFMU(self):
+        '''
+        Removes the directory containing extracted FMU.
+        To be implemented.
+        :return:
+        '''
+
