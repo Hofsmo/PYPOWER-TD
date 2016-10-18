@@ -3,6 +3,7 @@ import numpy as np
 import os
 import inspect
 
+
 def main():
     '''
     Example demonstrating how to simulate the Modelica file
@@ -18,12 +19,14 @@ def main():
 
     # Create the dictionary of parameters
     params = {'gain1.k': 2}
-    y = fmu_sys.time_response(params, x, t, 0.01)
+    y = fmu_sys.time_response(params, x, t)
 
     # Printing time, input and output
 
     for idx, t_step in enumerate(t):
         print "Time:", t_step, "- Input:", x[idx], "- Output:", y[idx]
+
+    fmu_sys.cleanFMU()
 
 if __name__ == "__main__":
     main()

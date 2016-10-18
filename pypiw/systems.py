@@ -8,7 +8,7 @@ import os.path
 import numpy as np
 import fmipp
 import shutil
-
+import urlparse
 
 
 
@@ -127,7 +127,7 @@ class ModelicaSystem(SystemBase):
         self.fmu = fmipp.FMUModelExchangeV2(self.extracted_fmu, self.model_name, self.logging_on,
                                         False,self.event_search_precision, self.integrator_type)
 
-    def time_response(self, parameters, x, t, step_size):
+    def time_response(self, parameters, x, t):
         '''
         Method that returns the response of the FMU
         :param parameters: Model's parameters.
@@ -170,4 +170,7 @@ class ModelicaSystem(SystemBase):
         To be implemented.
         :return:
         '''
+        p = urlparse.urlparse(self.extracted_fmu)
+        path = p.path
+        print path
 
