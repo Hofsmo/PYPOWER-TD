@@ -26,7 +26,7 @@ def main():
     for idx, t_step in enumerate(t):
         print "Time:", t_step, "- Input:", x[idx], "- Output:", y[idx]
 
-    fmu_sys.cleanFMU()
+    # fmu_sys.clean_fmu()
 
 if __name__ == "__main__":
     main()

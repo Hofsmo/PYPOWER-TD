@@ -8,8 +8,7 @@ import os.path
 import numpy as np
 import fmipp
 import shutil
-import urlparse
-
+import urlparse, urllib
 
 
 class SystemBase():
@@ -22,6 +21,7 @@ class SystemBase():
     def time_response(self, parameters, x, t):
         """This method calculates the time response of the system."""
         pass
+
 
 class Tf(SystemBase):
     """Class for transfer function representation."""
@@ -120,6 +120,7 @@ class ModelicaSystem(SystemBase):
         assert os.path.exists(file_path), 'File path does not exist!'
 
         # Extract the FMU
+
         self.extracted_fmu = fmipp.extractFMU(file_path, os.path.dirname(file_path))
         self.logging_on = logging_on
         self.event_search_precision = event_search_precision
@@ -139,7 +140,7 @@ class ModelicaSystem(SystemBase):
         status = self.fmu.instantiate(self.model_name)  # instantiate model
         assert status == fmipp.fmiOK, "Could not instantiate the model"  # check status
 
-        self.setParams(parameters)  # set model parameters
+        self.set_params(parameters)  # set model parameters
 
         status = self.fmu.initialize()  # initialize model
         assert status == fmipp.fmiOK, "Could not initialize the model"  # check status
@@ -153,7 +154,7 @@ class ModelicaSystem(SystemBase):
 
         return y
 
-    def setParams(self, params):
+    def set_params(self, params):
         '''
         A function that sets the parameters in the fmu form the dictionary params.
         Currently, only real parameters are supported.
@@ -163,14 +164,13 @@ class ModelicaSystem(SystemBase):
         for name, value in params.items():
             self.fmu.setRealValue(name, value)
 
-
-    def cleanFMU(self):
+    def clean_fmu(self):
         '''
         Removes the directory containing extracted FMU.
-        To be implemented.
+        To be implemented fully.
         :return:
         '''
-        p = urlparse.urlparse(self.extracted_fmu)
-        path = p.path
+        path = urllib.url2pathname(urlparse.urlparse(self.extracted_fmu).path)  # Convert url to path
+        shutil.rmtree(path)  # Remove the extracted FMU directory
         print path
 
